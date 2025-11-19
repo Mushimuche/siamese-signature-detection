@@ -89,19 +89,19 @@ st.sidebar.info(
 
 OPTIMAL_THRESHOLD = 0.4500
 
-if 'ref_drawing_state' not in st.session_state:
-    st.session_state.ref_drawing_state = None
+# Initialize session state
 if 'ref_image_data' not in st.session_state:
     st.session_state.ref_image_data = None
-if 'test_drawing_state' not in st.session_state:
-    st.session_state.test_drawing_state = None
 if 'test_image_data' not in st.session_state:
     st.session_state.test_image_data = None
-    
 if 'ref_uploaded_file' not in st.session_state:
     st.session_state.ref_uploaded_file = None
 if 'test_uploaded_file' not in st.session_state:
     st.session_state.test_uploaded_file = None
+if 'clear_ref_flag' not in st.session_state:
+    st.session_state.clear_ref_flag = False
+if 'clear_test_flag' not in st.session_state:
+    st.session_state.clear_test_flag = False
 
 col1, col2 = st.columns(2)
 
@@ -120,6 +120,8 @@ with col1:
 
     with ref_tabs[0]:
         st.markdown("**Draw your signature below:**")
+        
+        # Canvas with update_streamlit set to False to reduce reruns
         ref_canvas_result = st_canvas(
             stroke_width=3,
             stroke_color="#000000",
@@ -127,22 +129,23 @@ with col1:
             height=200,
             width=400,
             drawing_mode="freedraw",
-            key="ref_canvas",
-            initial_drawing=st.session_state.ref_drawing_state,
-            # FIX: Hide the built-in toolbar to avoid confusion
-            display_toolbar=False 
+            key="ref_canvas_v2",
+            display_toolbar=False,
+            update_streamlit=False  # Critical: prevents constant reruns
         )
         
-        if ref_canvas_result.json_data is not None:
-            st.session_state.ref_drawing_state = ref_canvas_result.json_data
+        # Only update state when there's actual drawing content
         if ref_canvas_result.image_data is not None:
-            st.session_state.ref_image_data = ref_canvas_result.image_data.copy()
+            # Check if canvas has any content
+            if np.sum(ref_canvas_result.image_data[:,:,3]) > 0:  # Check alpha channel
+                st.session_state.ref_image_data = ref_canvas_result.image_data.copy()
         
-        # FIX: Re-introduce the reliable button to clear the canvas state
-        if st.button("Clear Reference Canvas", key="clear_ref"):
-            st.session_state.ref_drawing_state = None
-            st.session_state.ref_image_data = None
-            st.rerun()
+        col_btn1, col_btn2 = st.columns([1, 3])
+        with col_btn1:
+            if st.button("🗑️ Clear", key="clear_ref"):
+                st.session_state.ref_image_data = None
+                st.session_state.clear_ref_flag = True
+                st.rerun()
 
 # --- TEST SIGNATURE COLUMN ---
 with col2:
@@ -159,6 +162,8 @@ with col2:
         
     with test_tabs[0]:
         st.markdown("**Draw your signature below:**")
+        
+        # Canvas with update_streamlit set to False to reduce reruns
         test_canvas_result = st_canvas(
             stroke_width=3,
             stroke_color="#000000",
@@ -166,22 +171,23 @@ with col2:
             height=200,
             width=400,
             drawing_mode="freedraw",
-            key="test_canvas",
-            initial_drawing=st.session_state.test_drawing_state,
-            # FIX: Hide the built-in toolbar to avoid confusion
-            display_toolbar=False
+            key="test_canvas_v2",
+            display_toolbar=False,
+            update_streamlit=False  # Critical: prevents constant reruns
         )
         
-        if test_canvas_result.json_data is not None:
-            st.session_state.test_drawing_state = test_canvas_result.json_data
+        # Only update state when there's actual drawing content
         if test_canvas_result.image_data is not None:
-            st.session_state.test_image_data = test_canvas_result.image_data.copy()
+            # Check if canvas has any content
+            if np.sum(test_canvas_result.image_data[:,:,3]) > 0:  # Check alpha channel
+                st.session_state.test_image_data = test_canvas_result.image_data.copy()
 
-        # FIX: Re-introduce the reliable button to clear the canvas state
-        if st.button("Clear Test Canvas", key="clear_test"):
-            st.session_state.test_drawing_state = None
-            st.session_state.test_image_data = None
-            st.rerun()
+        col_btn1, col_btn2 = st.columns([1, 3])
+        with col_btn1:
+            if st.button("🗑️ Clear", key="clear_test"):
+                st.session_state.test_image_data = None
+                st.session_state.clear_test_flag = True
+                st.rerun()
 
 st.markdown("---")
 
@@ -189,7 +195,10 @@ with st.expander("ℹ️ How to use this app"):
     st.markdown("""
     ### Instructions:
     1.  **Provide Signatures:** For both the 'Reference' and 'Test' sections, you can either **draw** the signature or **upload** an image.
-    2.  **Verify:** Once both signatures are provided, click the "Verify Signatures" button.
+    2.  **Draw Signatures:** Click and drag on the white canvas to draw. Click the 🗑️ Clear button to reset.
+    3.  **Verify:** Once both signatures are provided, click the "Verify Signatures" button.
+    
+    **Note:** After drawing, the signature is automatically saved. You can continue to the verification step.
     """)
 
 st.markdown("---")
@@ -253,4 +262,4 @@ if st.button("🔍 Verify Signatures", type="primary", use_container_width=True)
             except Exception as e:
                 st.error(f"❌ An error occurred during verification: {str(e)}")
 
-# version 1.7
+# version 1.9
