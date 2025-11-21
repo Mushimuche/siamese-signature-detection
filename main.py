@@ -4,6 +4,15 @@ import numpy as np
 import cv2
 import tensorflow as tf
 from PIL import Image
+import base64
+
+def get_image_base64(image_path):
+    """Convert local image to base64 string for HTML embedding"""
+    try:
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    except:
+        return None
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -134,8 +143,136 @@ def preprocess_image(image_input):
     return img_final, img
 
 # --- MAIN UI LAYOUT ---
-st.title("✒️ Signature Forgery Detection")
-st.markdown("Using a Siamese Neural Network to distinguish between genuine and forged signatures.")
+# Create header with About button
+header_col1, header_col2 = st.columns([6, 1])
+
+with header_col1:
+    st.title("✒️ Signature Forgery Detection")
+    st.markdown("Using a Siamese Neural Network to distinguish between genuine and forged signatures.")
+
+with header_col2:
+    st.write("")  # Spacer for alignment
+    if st.button("ℹ️ About", key="about_button", use_container_width=True):
+        st.session_state.show_about = True
+
+# About Dialog/Modal
+if st.session_state.get('show_about', False):
+    with st.container():
+        st.markdown("---")
+        
+        # Header with close button
+        about_header_col1, about_header_col2 = st.columns([6, 1])
+        with about_header_col1:
+            st.markdown("### 📋 About This Project")
+        with about_header_col2:
+            if st.button("✖", key="close_about"):
+                st.session_state.show_about = False
+                st.rerun()
+        
+        # Welcome Section
+        st.info("""
+        **Welcome!**  
+        This is a deployed web app for a research project about signature forgery detection using Siamese Neural Networks.
+        """)
+        
+        st.markdown("---")
+        
+        # Authors Section
+        st.markdown("### 👥 Research Authors")
+        
+        author_col1, author_col2, author_col3 = st.columns(3)
+        
+        # Convert images to base64 for HTML embedding
+        author1_b64 = get_image_base64("assets/BSCS3_khin.jpg")
+        author2_b64 = get_image_base64("assets/BSCS2_Rui.jpg")
+        author3_b64 = get_image_base64("assets/BSCS3_Ian.jpeg")
+
+        with author_col1:
+            st.markdown(f"""
+            <div style="text-align: center; padding: 20px; background-color: #2ECC71; border-radius: 10px; color: white;">
+                <h4 style="margin-bottom: 5px;">Khinje Louis P. Curugan</h4>
+                <p style="margin-bottom: 15px;"><strong>BSCS Student</strong></p>
+                <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                    <img src="data:image/jpeg;base64,{author1_b64}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid white;">
+                </div>
+                <hr style="border-color: rgba(255,255,255,0.3); margin: 15px 0;">
+                <p style="font-size: 15px; margin: 0;">College of Information and Computing<br>
+                BS Computer Science - Major in Data Science<br>
+                CS 3110 Modelling and Simulation [BSCS 3, AY 2025-2026]</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with author_col2:
+            st.markdown(f"""
+            <div style="text-align: center; padding: 20px; background-color: #9B59B6; border-radius: 10px; color: white;">
+                <h4 style="margin-bottom: 5px;">Rui Manuel A. Palabon</h4>
+                <p style="margin-bottom: 15px;"><strong>BSCS Student</strong></p>
+                <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                    <img src="data:image/jpeg;base64,{author2_b64}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid white;">
+                </div>
+                <hr style="border-color: rgba(255,255,255,0.3); margin: 15px 0;">
+                <p style="font-size: 15px; margin: 0;">College of Information and Computing<br>
+                BS Computer Science - Major in Data Science<br>
+                CS 3110 Modelling and Simulation [BSCS 3, AY 2025-2026]</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with author_col3:
+            st.markdown(f"""
+            <div style="text-align: center; padding: 20px; background-color: #5D6D7E; border-radius: 10px; color: white;">
+                <h4 style="margin-bottom: 5px;">Aj Ian L. Resurreccion</h4>
+                <p style="margin-bottom: 15px;"><strong>BSCS Student</strong></p>
+                <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                    <img src="data:image/jpeg;base64,{author3_b64}" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid white;">
+                </div>
+                <hr style="border-color: rgba(255,255,255,0.3); margin: 15px 0;">
+                <p style="font-size: 15px; margin: 0;">College of Information and Computing<br>
+                BS Computer Science - Major in Data Science<br>
+                CS 3110 Modelling and Simulation [BSCS 3, AY 2025-2026]</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown("---")
+        
+        # Datasets Section
+        st.markdown("### 📊 Datasets Used")
+        
+        dataset_col1, dataset_col2 = st.columns(2)
+        
+        with dataset_col1:
+            st.markdown("#### 1. GPDS 1-150 Dataset")
+            st.write("**About:** Signature dataset from Kaggle")
+            st.write("**Link to Dataset:**")
+            st.link_button(
+                "🔗 View on Kaggle",
+                "https://www.kaggle.com/datasets/adeelajmal/gpds-1150/data",
+                use_container_width=True
+            )
+            st.caption("Source: Kaggle - GPDS 1-150")
+        
+        with dataset_col2:
+            st.markdown("#### 2. CEDAR Signature Database")
+            st.write("**About:** Consists of signatures from 55 writers with 24 original signatures and 24 skilled forgeries each")
+            st.write("**Links:**")
+            st.link_button(
+                "🔗 Official Website",
+                "https://cedar.buffalo.edu/signature/",
+                use_container_width=True
+            )
+            st.link_button(
+                "⬇️ Download Dataset",
+                "https://github.com/nikostsagk/signature-verification/releases/download/cedar/cedar_dataset.zip",
+                use_container_width=True
+            )
+            st.caption("Source: CEDAR, University at Buffalo")
+        
+        st.markdown("---")
+        
+        # Institution
+        st.markdown("### 🏛️ Institution")
+        st.info("**University of Southeastern Philippines**")
+        
+        st.markdown("---")
 
 # --- INSTRUCTIONS (Restored) ---
 with st.expander("ℹ️ How to use this app"):
