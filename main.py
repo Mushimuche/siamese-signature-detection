@@ -178,11 +178,11 @@ def render_input_column(col, title, key_prefix):
         
         else: # Draw Mode
             canvas_result = st_canvas(
-                stroke_width=3, 
+                stroke_width=4, 
                 stroke_color="black", 
                 background_color="white",
                 height=300, 
-                width=500, 
+                width=700, 
                 key=f"{key_prefix}_canvas",
                 display_toolbar=True
             )
@@ -215,27 +215,130 @@ if st.button("🔍 Verify Signatures", type="primary"):
             
             st.write("### 👁️ What the Model Sees")
             c1, c2 = st.columns(2)
-            c1.image(ref_viz, caption=f"Ref ({ref_mode})", width=200, clamp=True, channels='GRAY')
-            c2.image(test_viz, caption=f"Test ({test_mode})", width=200, clamp=True, channels='GRAY')
+            c1.image(ref_viz, caption=f"Ref ({ref_mode})", width=250, clamp=True, channels='GRAY')
+            c2.image(test_viz, caption=f"Test ({test_mode})", width=250, clamp=True, channels='GRAY')
             
             # Predict
             distance = model.predict([ref_processed, test_processed], verbose=0)[0][0]
             THRESHOLD = 0.45 
             
-            st.write("### 📊 Results")
+            st.write("### 📊 Verification Results") #
             res_col1, res_col2 = st.columns([2, 1])
-            
-            with res_col1:
-                if distance < THRESHOLD:
-                    st.success("✅ **MATCH CONFIRMED: GENUINE**")
-                    st.write("The signatures are statistically identical.")
+                                                
+            # Calculate confidence score (inverse of normalized distance)
+            max_distance = 2.0  # Theoretical maximum for normalized euclidean distance
+            confidence_percentage = max(0, min(100, (1 - distance / max_distance) * 100))
+            is_genuine = distance < THRESHOLD
+                        
+            # Main Result Display
+            if is_genuine:
+                st.success("✅ **MATCH CONFIRMED: GENUINE SIGNATURE**")
+            else:
+                st.error("🚫 **MISMATCH DETECTED: POTENTIAL FORGERY**")
+                        
+            st.markdown("---")
+                        
+            # Statistics in organized columns
+            stat_col1, stat_col2, stat_col3 = st.columns(3)
+                        
+            with stat_col1:
+                st.metric(
+                    label="Confidence Score",
+                    value=f"{confidence_percentage:.1f}%",
+                    delta="High Confidence" if confidence_percentage > 70 else "Low Confidence",
+                    delta_color="normal" if confidence_percentage > 70 else "inverse",
+                    help="Model's confidence in the verification result. Low % = Different (Forged), High % = Identical (Genuine)."
+                )
+                
+            with stat_col2:
+                st.metric(
+                    label="Dissimilarity Distance",
+                    value=f"{distance:.4f}",
+                    delta="Below Threshold" if is_genuine else "Above Threshold",
+                    delta_color="normal" if is_genuine else "inverse",
+                    help="Lower values indicate more similar signatures"
+                )
+                
+            with stat_col3:
+                st.metric(
+                    label="Decision Threshold",
+                    value=f"{THRESHOLD}",
+                    help="Signatures with distance below this value are considered genuine"
+                )
+
+            st.markdown("---")
+                        
+            # Detailed Analysis Section
+            st.write("### 📈 Detailed Analysis")
+                        
+            analysis_col1, analysis_col2 = st.columns(2)
+                        
+            with analysis_col1:
+                st.markdown("**Statistical Metrics:**")
+                
+                # Calculate similarity percentage (inverse of distance)
+                similarity_percentage = max(0, (1 - distance) * 100)
+                
+                # Determine verification status
+                if is_genuine:
+                    status_color = "🟢"
+                    status_text = "GENUINE"
+                    interpretation = "The Siamese Network detected high feature similarity between the signatures."
                 else:
-                    st.error("🚫 **MISMATCH DETECTED: FORGED**")
-                    st.write("The signatures differ significantly.")
-            
-            with res_col2:
-                st.metric("Dissimilarity Score", f"{distance:.4f}")
-                st.caption(f"Threshold: {THRESHOLD}")
+                    status_color = "🔴"
+                    status_text = "FORGED"
+                    interpretation = "The Siamese Network detected significant feature differences between the signatures."
+                
+                st.markdown(f"- **Verification Status:** {status_color} {status_text}")
+                st.markdown(f"- **Similarity Score:** {similarity_percentage:.2f}%")
+                st.markdown(f"- **Confidence Level:** {confidence_percentage:.1f}%")
+                st.markdown(f"- **Distance from Threshold:** {abs(distance - THRESHOLD):.4f}")
+                
+            with analysis_col2:
+                st.markdown("**Interpretation:**")
+                st.info(interpretation)
+                
+                # Risk Assessment
+                if is_genuine:
+                    if confidence_percentage > 85:
+                        risk_level = "Very Low Risk"
+                        risk_color = "🟢"
+                    elif confidence_percentage > 70:
+                        risk_level = "Low Risk"
+                        risk_color = "🟡"
+                    else:
+                        risk_level = "Moderate Risk"
+                        risk_color = "🟠"
+                else:
+                    if confidence_percentage < 30:
+                        risk_level = "High Forgery Risk"
+                        risk_color = "🔴"
+                    elif confidence_percentage < 50:
+                        risk_level = "Moderate Forgery Risk"
+                        risk_color = "🟠"
+                    else:
+                        risk_level = "Low Forgery Risk"
+                        risk_color = "🟡"
+                
+                st.markdown(f"**Risk Assessment:** {risk_color} {risk_level}")
+                
+                # Recommendation
+                if is_genuine and confidence_percentage > 75:
+                    st.success("✓ Signature verification passed with high confidence.")
+                elif is_genuine and confidence_percentage <= 75:
+                    st.warning("⚠ Signature appears genuine but confidence is moderate. Manual review recommended.")
+                elif not is_genuine and confidence_percentage < 40:
+                    st.error("✗ Strong indication of forgery. Reject signature.")
+                else:
+                    st.warning("⚠ Possible forgery detected. Manual verification strongly recommended.")
+
+            st.markdown("---")
+                        
+        except Exception as e:
+            st.error(f"❌ Processing Error: {e}")
+            st.info("Please ensure both signatures are clearly drawn or uploaded.")
                 
         except Exception as e:
             st.error(f"Processing Error: {e}")
+
+# version 3.2           
