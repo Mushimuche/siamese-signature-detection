@@ -2,3 +2,7 @@ streamlit
 numpy
 pandas
 scikit-learn
+streamlit-drawable-canvas
+opencv-python-headless
+tensorflow
+Pillow
