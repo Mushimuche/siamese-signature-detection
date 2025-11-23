@@ -198,7 +198,7 @@ if st.session_state.get('show_about', False):
         author_col1, author_col2, author_col3 = st.columns(3)
         
         # Convert images to base64 for HTML embedding
-        author1_b64 = get_image_base64("assets/BSCS3_khin.jpg")
+        author1_b64 = get_image_base64("assets/BSCS3_Khin.jpg")
         author2_b64 = get_image_base64("assets/BSCS2_Rui.jpg")
         author3_b64 = get_image_base64("assets/BSCS3_Ian.jpeg")
 
