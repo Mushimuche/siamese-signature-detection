@@ -22,6 +22,21 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Hide GitHub icon and deploy button
+# Hide GitHub icon, deploy button, and footer
+hide_streamlit_style = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .viewerBadge_container__1QSob {display: none;}
+    .viewerBadge_link__1S137 {display: none;}
+    div[data-testid="stDecoration"] {display: none;}
+    .stDeployButton {display: none;}
+    </style>
+"""
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 # --- CSS STYLING ---
 st.markdown("""
 <style>
